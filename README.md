@@ -2,7 +2,7 @@
 
 EsubIz Tools,Passive subdomain Enumeration
 
-<h4 align="center"><img src="https://raw.githubusercontent.com/pikpikcu/EsubIz/master/logo.png" width="300px" height="300px">
+<h4 align="center"><img src="https://raw.githubusercontent.com/pikpikcu/EsubIz/master/img/logo.jpg" width="300px" height="300px">
 
 </a>
 <h4 align="center">Details</h4>                
