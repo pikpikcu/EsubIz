@@ -1,0 +1,112 @@
+#!/bin/bash
+
+# Faforit Colors
+BK=$(tput setaf 0) # Black
+RD=$(tput setaf 1) # Red
+GR=$(tput setaf 2) # Green
+YW=$(tput setaf 3) # Yellow
+BG=$(tput setab 4) # Background Color
+PP=$(tput setaf 5) # purple
+CY=$(tput setaf 6) # Cyan
+WH=$(tput setaf 7) # White
+NT=$(tput sgr0) # Netral
+BD=$(tput bold) # Bold
+site="$1"
+_version_="1.0"
+_created_="pikpikcu"
+
+function banner(){
+    printf "
+
+    ${CY}   ██████████ ${RD}                   █████     █████           
+    ${CY}  ▒▒███▒▒▒▒▒█ ${PP}                  ▒▒███     ▒▒███            
+    ${CY}   ▒███  █ ▒  ${PP} █████  █████ ████ ▒███████  ▒███   █████████
+    ${CY}   ▒██████   ${PP} ███▒▒  ▒▒███ ▒███  ▒███▒▒███ ▒███  ▒█▒▒▒▒███ 
+    ${CY}   ▒███▒▒█  ${PP} ▒▒█████  ▒███ ▒███  ▒███ ▒███ ▒███  ▒   ███▒  
+    ${CY}   ▒███ ▒   ${PP}█ ▒▒▒▒███ ▒███ ▒███  ▒███ ▒███ ▒███    ███▒   █
+    ${CY}   ██████████ ${PP}██████  ▒▒████████ ████████  █████  █████████
+    ${CY}   ▒▒▒▒▒▒▒▒▒▒ ${PP}▒▒▒▒▒▒    ▒▒▒▒▒▒▒▒ ▒▒▒▒▒▒▒▒  ▒▒▒▒▒  ▒▒▒▒▒▒▒▒▒  
+                                           ${RD} Version:${GR}$_version_
+                                           ${RD} Powered BY:${GR}$_created_
+    "
+}
+function _Run_(){
+    echo -e "\n${GR}[${RD}*${GR}] Checking Dependencies..."
+    if [ ! -f ~/go/bin/assetfinder ];then
+        echo -e "${GR}[${RD}*${GR}] assetfinder Not Found"
+        echo -e"${GR}[${RD}*${GR}]Install Assetfinder(y/n)"; read Install;
+            if [ $Install == "y" ];then
+                go get -u github.com/tomnomnom/assetfinder
+                echo -e "${GR}[${RD}*${GR}] Done Install Assetfinder "
+            else
+                echo -e "${GR}[${RD}*${GR}] Please Install Assetfinder!"
+                echo -e "${GR}[${RD}*${GR}] $0 Dont Work Run"
+                exit 1
+            fi
+    elif [ ! -f ~/go/bin/subfinder ];then
+        echo -e "${GR}[${RD}*${GR}] subfinder Not Found"
+        echo -e"${GR}[${RD}*${GR}]Install Subfinder(y/n)"; read Install;
+            if [ $Install == "y" ];then
+                go get -v github.com/projectdiscovery/subfinder/cmd/subfinder
+                echo -e "${GR}[${RD}*${GR}] Done Install Subfinder "
+            else
+                echo -e "${GR}[${RD}*${GR}] Please Install Subfinder!"
+                echo -e "${GR}[${RD}*${GR}] $0 Dont Work Run"
+                exit 1
+            fi    
+    elif [ ! -f /usr/local/bin/shodan ];then
+        echo -e "${GR}[${RD}*${GR}] shodan Not Found"
+        echo -e"${GR}[${RD}*${GR}]Install shodan(y/n)"; read Install;
+            if [ $Install == "y" ];then
+                pip install shodan
+                echo -e "${GR}[${RD}*${GR}] Done Install Shodan "
+                echo -e "${GR}[${RD}*${GR}] Setup Shodan Api:"; read api;
+                shodan init $api
+                echo -e "${GR}[${RD}*${GR}] Succes setup shodan Api"
+            else
+                echo -e "${GR}[${RD}*${GR}] Please Install Shodan!"
+                echo -e "${GR}[${RD}*${GR}] $0 Dont Work Run"
+                exit 1
+            fi
+    else
+        sleep 4
+        echo -e "${GR}[${RD}*${GR}] Success..."
+        echo -en "${GR}[${RD}*${GR}] Start Enumerating subdomains for ${RD}$site"
+        assetfinder  $site > out/$site.txt
+        subfinder -silent -d $site >> out/$site.txt
+        cat out/$site.txt | sort -u >> out/$site-1.txt
+        echo -en "\n"
+        echo -e "${GR}[${RD}*${GR}] Getting IP adresses for each subdomain"
+        for target in $(cat out/$site-1.txt);do
+            host $target 2>/dev/null | grep "has address" | cut -d" " -f4 >> out/$site-ip.txt 
+        done
+        echo -e "${GR}[${RD}*${GR}] Searching each IP on Shodan..."
+        for ip in $(cat out/$site-ip.txt );do
+            shodan host $ip 2>/dev/null | grep -v "Organization\|Country" > out/ip/$ip
+        done
+        echo -e "\nResults:\n"
+        cd out/ip 
+        for ip in $(ls | grep -v "txt\|sh\|out");do
+            echo -en "IP address: $ip \nHostname: $(cat $ip | grep 'Hostnames' | awk -F' ' '{print $2}')\n\n"
+            echo -en "Number of open ports: $(cat $ip | grep 'Number' | tail -c 2)\n"
+            echo -en "Open ports: \n$(cat $ip | grep "/tcp\|/udp")\n"
+            echo -en "$(cat $ip | grep 'CVE')\n"
+            echo -en "+=============================+\n"
+            echo -en "\n"
+        done
+        echo -en "\n"
+        echo -en "${GR}[${RD}*${GR}] Finished, check results ${GR}[${RD}*${GR}]"
+        echo -en "\n"
+    fi
+}
+
+if [[ $# -lt 1 ]];then 
+        clear
+        banner
+		echo -e "${NT}Usage:" 
+		echo -e "\t$0 <domain>\n" 
+		exit 1 
+fi
+banner
+mkdir -p out/ip
+_Run_
