@@ -22,7 +22,8 @@ EsubIz Tools,Passive subdomain Enumeration
 
 ### About EsubIz 
 
-    EsubIz: The process of gathering information about a dangerous hacking target without the target knowing what happened. Typical passive surveillance can include physical observations of company buildings
+    EsubIz: The process of gathering information about a dangerous hacking target without the target knowing what happened. 
+    Typical passive surveillance can include physical observations of company buildings
 
 ### requirements
 
